@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskMaster - Gerenciador de Tarefas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .api-status {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .api-status.online {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .api-status.offline {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .task-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .task-form input,
+        .task-form select {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .task-form input:focus,
+        .task-form select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .task-form button {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .task-form button:hover {
+            background: #5a67d8;
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .tasks-list {
+            list-style: none;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+
+        .task-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-item.completed {
+            background: #e8f5e9;
+            opacity: 0.8;
+        }
+
+        .task-checkbox {
+            margin-right: 15px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .task-title.completed {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        .task-category {
+            display: inline-block;
+            padding: 3px 8px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-edit,
+        .btn-delete {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .btn-edit {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-edit:hover {
+            background: #e0a800;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box h3 {
+            color: #0b5e9e;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            color: #333;
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .method-get {
+            background: #61affe;
+            color: white;
+        }
+
+        .method-post {
+            background: #49cc90;
+            color: white;
+        }
+
+        .method-put {
+            background: #fca130;
+            color: white;
+        }
+
+        .method-delete {
+            background: #f93e3e;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📋 TaskMaster</h1>
+        <p class="subtitle">Gerenciador de Tarefas com API Pública</p>
+
+        <div id="apiStatus" class="api-status offline">
+            🔴 Verificando conexão com API...
+        </div>
+
+        <div class="info-box">
+            <h3>📚 Sobre a API que estamos usando:</h3>
+            <p><strong>JSONPlaceholder</strong> - Uma API falsa para testes e prototipagem.</p>
+            <ul>
+                <li><span class="method-badge method-get">GET</span> Buscar dados</li>
+                <li><span class="method-badge method-post">POST</span> Criar novos recursos</li>
+                <li><span class="method-badge method-put">PUT</span> Atualizar recursos existentes</li>
+                <li><span class="method-badge method-delete">DELETE</span> Remover recursos</li>
+            </ul>
+            <p><small>⚠️ Nota: As alterações não persistem no servidor (API de teste), mas você verá as respostas
+                    simuladas!</small></p>
+        </div>
+
+        <div class="task-form">
+            <input type="text" id="taskTitle" placeholder="Digite o título da tarefa" required>
+            <select id="taskCategory">
+                <option value="Pessoal">Pessoal</option>
+                <option value="Estudos">Estudos</option>
+                <option value="Trabalho">Trabalho</option>
+                <option value="Outros">Outros</option>
+            </select>
+            <button id="btnAddTask">➕ Adicionar Tarefa</button>
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">Todas</button>
+            <button class="filter-btn" data-filter="pending">Pendentes</button>
+            <button class="filter-btn" data-filter="completed">Concluídas</button>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">🔄 Carregando tarefas...</div>
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <ul id="tasksList" class="tasks-list"></ul>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
